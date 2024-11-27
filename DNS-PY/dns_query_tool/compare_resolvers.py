@@ -1,38 +1,29 @@
-from typing import Dict, List
+from typing import Dict
 from tabulate import tabulate
 
 def compare_resolver_features(resolver_data: Dict[str, Dict]) -> str:
     """
-    Compare features between multiple resolvers and format the output
-    
-    Args:
-        resolver_data (Dict[str, Dict]): Dictionary of resolver data
-        
-    Returns:
-        str: Formatted comparison table
+    Compare features between multiple resolvers and format the output.
     """
     if not resolver_data:
-        return "No resolver data available for comparison"
-        
+        return "No resolver data available for comparison."
+
     headers = ['Feature'] + list(resolver_data.keys())
     comparison_rows = []
-    
-    # Get all unique features across resolvers
-    all_features = set()
-    for resolver_info in resolver_data.values():
-        all_features.update(resolver_info.keys())
-    
+
+    # Define features to compare
+    features = ['qname_minimization', 'extended_errors', 'info_url']
+
     # Build comparison table
-    for feature in sorted(all_features):
+    for feature in features:
         row = [feature]
         for resolver in resolver_data.keys():
-            value = resolver_data[resolver].get(feature, 'N/A')
+            value = resolver_data[resolver].get(feature)
+            # Format boolean values
             if isinstance(value, bool):
-                row.append('✓' if value else '✗')
-            elif isinstance(value, (dict, list)):
-                row.append(str(value))
-            else:
-                row.append(str(value))
+                value = str(value)
+            # Replace None with 'N/A' only if truly None
+            row.append(value if value is not None else 'N/A')
         comparison_rows.append(row)
-    
+
     return tabulate(comparison_rows, headers=headers, tablefmt='grid')

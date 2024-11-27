@@ -1,7 +1,10 @@
 import dns.resolver
-import dns.exception
+import dns.message
+import dns.query
+import dns.rdata
+import dns.rdatatype
 import logging
-from typing import Optional
+from typing import Optional, List
 
 def setup_logging():
     logging.basicConfig(
@@ -10,28 +13,52 @@ def setup_logging():
     )
     return logging.getLogger('dns_query_tool')
 
-def query_resolver_info(resolver_address: str, query_type: str = 'TXT') -> Optional[dns.resolver.Answer]:
+# RESINFO record type as specified in RFC 9606
+RESINFO = 261
+
+def query_resolver_info(resolver_address: str, domain: str = 'example.com') -> Optional[List[str]]:
     """
-    Query a DNS resolver for its self-published information based on RFC 9606
+    Query a DNS resolver for RESINFO records.
     
     Args:
         resolver_address (str): IP address of the DNS resolver
-        query_type (str): DNS query type (default: TXT)
+        domain (str): Domain to query RESINFO for
         
     Returns:
-        Optional[dns.resolver.Answer]: DNS response or None if query fails
+        Optional[List[str]]: RESINFO record contents or None if query fails
     """
     logger = setup_logging()
-    resolver = dns.resolver.Resolver()
-    resolver.nameservers = [resolver_address]
     
     try:
-        # Query for resolver information as specified in RFC 9606
-        response = resolver.resolve('_dns.resolverinfo', query_type)
-        return response
-    except dns.exception.DNSException as e:
-        logger.error(f"DNS query error for {resolver_address}: {str(e)}")
-        return None
+        # Construct a custom DNS query message for RESINFO
+        query = dns.message.make_query(domain, RESINFO)
+        
+        # Send the query directly using dns.query
+        response = dns.query.udp(query, resolver_address, timeout=5)
+        
+        # Log the full response for debugging
+        logger.info(f"Full DNS response: {response}")
+        
+        # Extract RESINFO records
+        resinfo_records = []
+        for answer in response.answer:
+            logger.info(f"Answer section: {answer}")
+            for rdata in answer:
+                # Convert to text representation
+                record_text = rdata.to_text()
+                logger.info(f"Raw record text: {record_text}")
+                
+                # Additional processing to clean up the record
+                cleaned_record = record_text.strip('"').strip()
+                resinfo_records.append(cleaned_record)
+        
+        if resinfo_records:
+            logger.info(f"Found {len(resinfo_records)} RESINFO records")
+            return resinfo_records
+        else:
+            logger.error(f"No RESINFO records found for {domain}")
+            return None
+    
     except Exception as e:
-        logger.error(f"Unexpected error querying resolver {resolver_address}: {str(e)}")
+        logger.error(f"Error querying resolver {resolver_address} for RESINFO: {str(e)}")
         return None
