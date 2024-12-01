@@ -3,4 +3,4 @@ tabulate
 
 #python main.py 8.8.8.8 1.1.1.1 9.9.9.9 208.67.222.222
 
-#python main.py 104.198.169.163
+#python main.py 34.171.34.79
