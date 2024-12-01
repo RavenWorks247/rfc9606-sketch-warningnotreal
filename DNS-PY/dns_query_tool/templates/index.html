@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DNS Resolver Query</title>
+</head>
+<body>
+    <h1>DNS Resolver Query</h1>
+    <form action="/query" method="POST">
+        <label for="resolvers">Resolver IPs (comma-separated):</label><br>
+        <input type="text" id="resolvers" name="resolvers" required><br><br>
+        
+        <label for="domain">Domain (default: example.com):</label><br>
+        <input type="text" id="domain" name="domain" value="example.com"><br><br>
+        
+        <label for="output">Output Format:</label><br>
+        <select id="output" name="output">
+            <option value="table">Table</option>
+            <option value="json">JSON</option>
+        </select><br><br>
+        
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
