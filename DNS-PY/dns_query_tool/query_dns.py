@@ -16,49 +16,53 @@ def setup_logging():
 # RESINFO record type as specified in RFC 9606
 RESINFO = 261
 
-def query_resolver_info(resolver_address: str, domain: str = 'example.com') -> Optional[List[str]]:
+def query_resolver_info(resolver_address: str, domain: str = 'example.com', query_type: str = 'RESINFO') -> Optional[List[str]]:
     """
-    Query a DNS resolver for RESINFO records.
+    Query a DNS resolver for specified records, defaulting to RESINFO.
     
     Args:
         resolver_address (str): IP address of the DNS resolver
-        domain (str): Domain to query RESINFO for
+        domain (str): Domain to query
+        query_type (str): DNS query type (e.g., 'A', 'AAAA', 'RESINFO')
         
     Returns:
-        Optional[List[str]]: RESINFO record contents or None if query fails
+        Optional[List[str]]: Record contents or None if query fails
     """
     logger = setup_logging()
     
+    # Route queries other than RESINFO or 'example.com' to 1.1.1.1
+    if domain != 'example.com' or query_type != 'RESINFO':
+        resolver_address = '1.1.1.1'
+    
     try:
-        # Construct a custom DNS query message for RESINFO
-        query = dns.message.make_query(domain, RESINFO)
+        # Construct a DNS query with the specified type
+        if query_type.upper() == 'RESINFO':
+            query = dns.message.make_query(domain, RESINFO)
+        else:
+            query = dns.message.make_query(domain, dns.rdatatype.from_text(query_type))
         
-        # Send the query directly using dns.query
+        # Send the query to the designated resolver
         response = dns.query.udp(query, resolver_address, timeout=5)
         
-        # Log the full response for debugging
-        logger.info(f"Full DNS response: {response}")
+        # Log the full DNS response for debugging
+        logger.info(f"Full DNS response from {resolver_address}: {response}")
         
-        # Extract RESINFO records
-        resinfo_records = []
+        # Extract and process the response records
+        record_list = []
         for answer in response.answer:
             logger.info(f"Answer section: {answer}")
             for rdata in answer:
-                # Convert to text representation
-                record_text = rdata.to_text()
-                logger.info(f"Raw record text: {record_text}")
-                
-                # Additional processing to clean up the record
-                cleaned_record = record_text.strip('"').strip()
-                resinfo_records.append(cleaned_record)
+                record_text = rdata.to_text().strip('"').strip()
+                logger.info(f"Record text: {record_text}")
+                record_list.append(record_text)
         
-        if resinfo_records:
-            logger.info(f"Found {len(resinfo_records)} RESINFO records")
-            return resinfo_records
+        if record_list:
+            logger.info(f"Retrieved {len(record_list)} records from {resolver_address}")
+            return record_list
         else:
-            logger.error(f"No RESINFO records found for {domain}")
+            logger.error(f"No records found for {domain} with query type {query_type}")
             return None
     
     except Exception as e:
-        logger.error(f"Error querying resolver {resolver_address} for RESINFO: {str(e)}")
+        logger.error(f"Error querying {resolver_address} for {query_type} on {domain}: {str(e)}")
         return None
