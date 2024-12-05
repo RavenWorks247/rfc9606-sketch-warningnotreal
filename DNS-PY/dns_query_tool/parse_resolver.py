@@ -1,7 +1,5 @@
 import logging
-from typing import Dict, Any, List
-import binascii
-import re
+from typing import Dict, Any, List, Optional
 
 def parse_dns_response(response: List[str]) -> Dict[str, Any]:
     """
@@ -65,7 +63,7 @@ def parse_dns_response(response: List[str]) -> Dict[str, Any]:
 
 def parse_extended_error_range(error_range: str) -> str:
     """
-    Parse and interpret the extended error range.
+    Parse and interpret the extended error range with human-readable error codes.
     
     Args:
         error_range (str): The extended error range (e.g., '15-17')
@@ -87,23 +85,59 @@ def parse_extended_error_range(error_range: str) -> str:
 
     # Split the error range into individual codes
     try:
-        # Support single codes and ranges
+        # Support both single error codes and ranges (e.g., 15-17)
         if '-' in error_range:
             start, end = map(int, error_range.split('-'))
             error_codes = range(start, end + 1)
         else:
             error_codes = [int(error_range)]
 
-        # Collect error messages
+        # Collect error messages, using the meanings dictionary
         error_messages = []
         for code in error_codes:
-            if code in error_meanings:
-                error_messages.append(f"Error {code}: {error_meanings[code]}")
-            else:
-                error_messages.append(f"Unknown error code: {code}")
+            message = error_meanings.get(code, f"Unknown error code: {code}")
+            error_messages.append(message)
         
         return "; ".join(error_messages) if error_messages else "No extended errors"
     
     except ValueError:
         logging.error(f"Invalid error range format: {error_range}")
         return "Invalid error range"
+
+def format_resinfo_result(resinfo_records: Optional[List[str]]) -> Dict[str, str]:
+    """
+    Format parsed RESINFO records for display.
+    
+    Args:
+        resinfo_records (Optional[List[str]]): Raw RESINFO records
+    
+    Returns:
+        Dict[str, str]: Formatted results with human-readable keys
+    """
+    from query_dns import parse_resinfo_record, parse_extended_error_range
+    
+    if not resinfo_records:
+        return {}
+    
+    # Aggregate results across multiple records
+    result = {}
+    
+    for record in resinfo_records:
+        parsed_record = parse_resinfo_record(record)
+        
+        # Parse QNAME Minimization (case-insensitive check)
+        qnamemin = parsed_record.get('qnamemin', '').lower()
+        if qnamemin:
+            result['QNAME Minimization'] = 'Enabled' if qnamemin in ['true', '1', 'yes'] else 'Disabled'
+        
+        # Parse Extended Errors
+        exterr = parsed_record.get('exterr')
+        if exterr:
+            result['Extended Errors'] = parse_extended_error_range(exterr)
+        
+        # Parse Info URL
+        infourl = parsed_record.get('infourl')
+        if infourl:
+            result['Info URL'] = infourl
+    
+    return result
