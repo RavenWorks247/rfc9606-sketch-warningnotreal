@@ -30,9 +30,6 @@ def home():
 
 @app.route('/query', methods=['POST'])
 def query() -> Union[Dict, str]:
-    """
-    Process DNS query requests from the web form.
-    """
     try:
         resolvers_input = request.form.get('resolvers', '')
         domain = request.form.get('domain', 'example.com')
@@ -49,74 +46,57 @@ def query() -> Union[Dict, str]:
             query_results[resolver_ip] = {}
             for query_type in query_types:
                 logger.info(f"Querying {domain} ({query_type}) via {resolver_ip}")
-                response = query_resolver_info(resolver_ip, domain, query_type)
                 
+                # Call query_resolver_info with correct parameters
+                response = query_resolver_info(resolver_ip, domain, query_type)
+
                 # Process different query types
                 if query_type == 'RESINFO' and response:
-                    # Parse first RESINFO record
-                    parsed_resinfo = parse_resinfo_record(response[0]) if response else {}
-                    
-                    # Map parsed RESINFO to more readable format
                     resinfo_result = {
-                        'QNAME Minimization': parsed_resinfo.get('qnamemin', 'Not Supported'),
-                        'Extended Errors': parsed_resinfo.get('exterr', 'No extended errors'),
-                        'Info URL': parsed_resinfo.get('infourl', 'No info URL')
+                        'QNAME Minimization': 'Yes' if response[0].get('qnamemin', False) else 'No',
+                        'Extended Errors': response[0].get('exterr', 'No extended errors'),
+                        'Info URL': response[0].get('infourl', 'No info URL')
                     }
-                    response = resinfo_result
+                    query_results[resolver_ip][query_type] = resinfo_result
                 elif response:
-                    # For other record types, format as a comma-separated string
-                    response = ', '.join(map(str, response))
-                
-                query_results[resolver_ip][query_type] = response or "No data"
+                    # For other record types, join the records
+                    query_results[resolver_ip][query_type] = ', '.join(response)
+                else:
+                    query_results[resolver_ip][query_type] = "No data"
 
         if output_format == 'json':
             return jsonify(query_results)
         else:
-            # Comprehensive table generation
+            # Generate a comprehensive table format
             table_data = []
             
-            # Prepare headers
+            # Prepare headers with resolver IPs
             headers = ['Feature/Record Type'] + list(query_results.keys())
             
-            # First, add RESINFO features
-            default_features = [
-                'QNAME Minimization', 
-                'Extended Errors', 
-                'Info URL'
-            ]
+            # RESINFO-specific features
+            resinfo_features = ['QNAME Minimization', 'Extended Errors', 'Info URL']
             
-            # Iterate through default features
-            for feature in default_features:
+            # Add RESINFO features to table
+            for feature in resinfo_features:
                 row = [feature]
-                for resolver_ip in query_results.keys():
-                    # Extract feature value
-                    value = "N/A"
-                    for query_type, results in query_results[resolver_ip].items():
-                        if isinstance(results, dict) and feature in results:
-                            value = str(results[feature])
-                            break
+                for resolver_ip in query_results:
+                    # Extract RESINFO feature or use 'N/A'
+                    resinfo = query_results[resolver_ip].get('RESINFO', {})
+                    value = resinfo.get(feature, 'N/A') if isinstance(resinfo, dict) else 'N/A'
                     row.append(value)
                 table_data.append(row)
+
+            # Add non-RESINFO record types
+            for query_type in query_types:
+                if query_type != 'RESINFO':
+                    row = [query_type]
+                    for resolver_ip in query_results:
+                        # Get record type value or use 'No data'
+                        row.append(query_results[resolver_ip].get(query_type, 'No data'))
+                    table_data.append(row)
             
-            # Add other query types
-            other_query_types = [qt for qt in query_types if qt != 'RESINFO']
-            for query_type in other_query_types:
-                row = [query_type]
-                for resolver_ip in query_results.keys():
-                    # Get the record values
-                    value = query_results[resolver_ip].get(query_type, 'No data')
-                    row.append(str(value))
-                table_data.append(row)
-            
-            # Generate table with improved formatting
-            table_output = tabulate(
-                table_data, 
-                headers=headers, 
-                tablefmt='html',  # Use HTML format for rendering in template
-                numalign='left',
-                stralign='left'
-            )
-            
+            # Generate table with HTML format for better rendering
+            table_output = tabulate(table_data, headers, tablefmt='html')
             return render_template('result.html', comparison=table_output)
     
     except Exception as e:
