@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Query Results</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            border-bottom: 2px solid #dee2e6;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+            transition: background-color 0.3s ease;
+        }
+        .back-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        @media (max-width: 768px) {
+            table {
+                font-size: 14px;
+            }
+            th, td {
+                padding: 8px 10px;
+            }
+        }
+        ul.error-list {
+            margin-top: 20px;
+            padding: 0;
+            list-style-type: none;
+        }
+        ul.error-list li {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        ul.error-list li strong {
+            display: inline-block;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DNS Query Results</h1>
+        {{ comparison | safe }}
+        <a href="/" class="back-btn">New Query</a>
+        <ul class="error-list">
+            <li><strong>INFO-CODE 0:</strong> Other Error - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errother" target="_blank">Section 4.1</a></li>
+            <li><strong>INFO-CODE 1:</strong> Unsupported DNSKEY Algorithm - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errbaddnskeyalg" target="_blank">Section 4.2</a></li>
+            <li><strong>INFO-CODE 2:</strong> Unsupported DS Digest Type - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errbaddsdigest" target="_blank">Section 4.3</a></li>
+            <li><strong>INFO-CODE 3:</strong> Stale Answer - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#stalenoerror" target="_blank">Section 4.4</a> and <span>[<a href="https://www.rfc-editor.org/rfc/rfc8767" target="_blank">RFC8767</a>]</span></li>
+            <li><strong>INFO-CODE 4:</strong> Forged Answer - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#forgedanswer" target="_blank">Section 4.5</a></li>
+            <li><strong>INFO-CODE 5:</strong> DNSSEC Indeterminate - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errindeterminate" target="_blank">Section 4.6</a></li>
+            <li><strong>INFO-CODE 6:</strong> DNSSEC Bogus - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errbogus" target="_blank">Section 4.7</a></li>
+            <li><strong>INFO-CODE 7:</strong> Signature Expired - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errexpired" target="_blank">Section 4.8</a></li>
+            <li><strong>INFO-CODE 8:</strong> Signature Not Yet Valid - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errprior" target="_blank">Section 4.9</a></li>
+            <li><strong>INFO-CODE 9:</strong> DNSKEY Missing - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errnodnskey" target="_blank">Section 4.10</a></li>
+            <li><strong>INFO-CODE 10:</strong> RRSIGs Missing - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errnorrsig" target="_blank">Section 4.11</a></li>
+            <li><strong>INFO-CODE 11:</strong> No Zone Key Bit Set - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errnozonekey" target="_blank">Section 4.12</a></li>
+            <li><strong>INFO-CODE 12:</strong> NSEC Missing - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#nonsec" target="_blank">Section 4.13</a></li>
+            <li><strong>INFO-CODE 13:</strong> Cached Error - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#cachederror" target="_blank">Section 4.14</a></li>
+            <li><strong>INFO-CODE 14:</strong> Not Ready - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#notready" target="_blank">Section 4.15</a></li>
+            <li><strong>INFO-CODE 15:</strong> Blocked - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errblocked" target="_blank">Section 4.16</a></li>
+            <li><strong>INFO-CODE 16:</strong> Censored - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errcensored" target="_blank">Section 4.17</a></li>
+            <li><strong>INFO-CODE 17:</strong> Filtered - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errfiltered" target="_blank">Section 4.18</a></li>
+            <li><strong>INFO-CODE 18:</strong> Prohibited - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errprohibted" target="_blank">Section 4.19</a></li>
+            <li><strong>INFO-CODE 19:</strong> Stale NXDomain Answer - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#stalenx" target="_blank">Section 4.20</a></li>
+            <li><strong>INFO-CODE 20:</strong> Not Authoritative - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#errlame" target="_blank">Section 4.21</a></li>
+            <li><strong>INFO-CODE 21:</strong> Not Supported - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#deprecated" target="_blank">Section 4.22</a></li>
+            <li><strong>INFO-CODE 22:</strong> No Reachable Authority - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#noreachable" target="_blank">Section 4.23</a></li>
+            <li><strong>INFO-CODE 23:</strong> Network Error - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#neterror" target="_blank">Section 4.24</a></li>
+            <li><strong>INFO-CODE 24:</strong> Invalid Data - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#invaliddata" target="_blank">Section 4.25</a></li>
+            <li><strong>INFO-CODE 25-49151:</strong> Unassigned</li>
+            <li><strong>INFO-CODE 49152-65535:</strong> Reserved for Private Use - <a href="https://www.rfc-editor.org/rfc/rfc8914.html#IANA" target="_blank">Section 5.2</a></li>
+        </ul>
+    </div>
+</body>
+</html>
